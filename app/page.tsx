@@ -1,65 +1,82 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
+import { useState, useEffect } from 'react';
+import { Header } from '@/components/Header';
+import { PaymentChart } from '@/components/PaymentChart';
+import { RevenueChart } from '@/components/RevenueChart';
+import { SummaryCard } from '@/components/SummaryCard';
+import { UnpaidList } from '@/components/UnpaidList';
+import { getYearlyChartData, Member, Config, getCurrentFiscalMonthIndex } from '@/lib/utils/dataHelpers';
+
+export default function Dashboard() {
+  const [members, setMembers] = useState<Member[]>([]);
+  const [config, setConfig] = useState<Config | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // 💡 [새 기능 1] 현재 선택된 월 상태 관리 (기본값: 이번 달)
+  // 자바스크립트에서 월은 0부터 시작하므로 (0 = 1월, 11 = 12월) getMonth()를 그대로 씁니다.
+  const [selectedMonth, setSelectedMonth] = useState(getCurrentFiscalMonthIndex());
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const res = await fetch('/api/hello');
+        if (!res.ok) throw new Error('데이터 로드 실패');
+        const data = await res.json();
+        
+        setMembers(data.members);
+        setConfig(data.config);
+      } catch (error) {
+        console.error('종합 대시보드 데이터 로드 에러:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchData();
+  }, []);
+
+  const chartData = config ? getYearlyChartData(members, config, 'total') : []; 
+
+  if (isLoading || !config) {
+    return (
+      <>
+        <Header title="대쉬보드" />
+        <div className="p-20 text-center text-slate-500">종합 데이터를 분석하는 중입니다... ⏳</div>
+      </>
+    );
+  }
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+    <main className="space-y-8">
+      <Header 
+        title="대쉬보드"
+        showMonthFilter={true}
+        selectedMonth={selectedMonth}
+        onMonthChange={setSelectedMonth}
+      />
+
+      {/* 💡 [새 기능 3] SummaryCard에 monthIndex 전달 */}
+      <SummaryCard 
+        members={members} 
+        config={config} 
+        type="total" 
+        title="대학부 & 청년부 합계" 
+        monthIndex={selectedMonth} 
+      />
+
+      {/* 차트는 1년치 전체를 보여주므로 그대로 둡니다. */}
+      <section className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <PaymentChart data={chartData} />
+        <RevenueChart data={chartData} />
+      </section>
+
+      {/* 💡 [새 기능 4] UnpaidList에 monthIndex 전달 */}
+      <UnpaidList 
+        members={members} 
+        config={config} 
+        type="total" 
+        monthIndex={selectedMonth} 
+      />
+    </main>
   );
 }
