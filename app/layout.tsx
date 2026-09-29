@@ -1,21 +1,14 @@
-import  { Sidebar }  from "@/components/Sidebar";
-import "./globals.css"
+import type { Metadata } from 'next';
+import './globals.css';
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export const metadata: Metadata = {
+  title: 'Antioch 회비 현황',
+};
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ko">
-      <body>
-        <div className="flex">
-          <Sidebar /> 
-          <main className="w-screen min-h-screen p-6 bg-slate-50">
-            {children}
-          </main>
-        </div>
-      </body>
+      <body>{children}</body>
     </html>
   );
 }

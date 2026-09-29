@@ -1,53 +1,92 @@
-import { NavButton } from '@/components/NavButton'
+'use client';
 
-export function Sidebar() {
-  const menu = [
-    { name: "대시보드", href: '/' },
-    { name: "대학부 현황", href: '/univ' },
-    { name: "청년부 현황", href: '/youth' },
-    { name: "회계 장부", href: '/ledger' },
-    { name: "회원 관리", href: '/members' }
-  ];
+import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
 
-  return (
-    // 배치를 위해 w-64와 shrink-0를 꼭 추가했습니다.
-    <div className="w-64 min-h-screen bg-slate-900 text-white flex flex-col shrink-0">
-      
-      {/* 로고 섹션 */}
-      <aside className="p-8"> 
-        <h1 className="text-xl font-bold tracking-tight bg-linear-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent"> 
-          Antioch Accounting 
-        </h1>
-        <p className="text-[10px] text-slate-400 mt-1 uppercase tracking-widest font-semibold">
-          Finance Management
-        </p>
-      </aside>
+const MENUS = {
+  public: [
+    { name: '대시보드', href: '/' },
+    { name: '대학부 현황', href: '/univ' },
+    { name: '청년부 현황', href: '/youth' },
+    { name: '수입 · 지출', href: '/finance' },
+  ],
+  admin: [
+    { name: '미납 현황', href: '/admin' },
+    { name: '회계 장부', href: '/admin/ledger' },
+    { name: '수입 · 지출 입력', href: '/admin/finance' },
+    { name: '회원 관리', href: '/admin/members' },
+  ],
+};
 
-      {/* 메뉴 섹션 */}
-      <nav className="flex-1 px-4">
-        <ul className="space-y-1">
-          {menu.map((item) => (
-            <NavButton
-              key={item.href}
-              name={item.name}
-              href={item.href}
-            />
-          ))}
-        </ul>
-      </nav>
+const footerButton =
+  'rounded-md border border-slate-700 px-3 py-1.5 text-slate-300 transition-colors hover:border-slate-500 hover:text-white md:w-full md:text-center';
 
-      {/* 푸터 섹션 (옵션) */}
-      <div className="p-6 border-t border-slate-800">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-xs font-bold">
-            D
-          </div>
-          <div className="flex flex-col">
-            <span className="text-xs font-medium text-slate-200">관리자 계정</span>
-            {/* <span className="text-[10px] text-slate-500 font-medium">관리자 계정</span> */}
-          </div>
-        </div>
-      </div>
+export function Sidebar({ variant }: { variant: 'public' | 'admin' }) {
+  const pathname = usePathname();
+  const router = useRouter();
+  const menu = MENUS[variant];
+
+  const logout = async () => {
+    await fetch('/api/auth', { method: 'DELETE' });
+    router.replace('/');
+    router.refresh();
+  };
+
+  const footer =
+    variant === 'admin' ? (
+      <>
+        <Link href="/" className={footerButton}>대시보드</Link>
+        <button onClick={logout} className={footerButton}>로그아웃</button>
+      </>
+    ) : (
+      <Link href="/admin" className={footerButton}>관리자 페이지</Link>
+    );
+
+  const link = (item: { name: string; href: string }, mobile = false) => {
+    const active = pathname === item.href;
+    return (
+      <Link
+        key={item.href}
+        href={item.href}
+        className={
+          mobile
+            ? `shrink-0 rounded-md px-3 py-1.5 text-sm ${active ? 'bg-white/10 text-white' : 'text-slate-400'}`
+            : `block rounded-md px-3 py-2 text-sm transition-colors ${
+                active ? 'bg-white/10 font-medium text-white' : 'text-slate-400 hover:bg-white/5 hover:text-slate-200'
+              }`
+        }
+      >
+        {item.name}
+      </Link>
+    );
+  };
+
+  const brand = (
+    <div>
+      <p className="font-semibold tracking-tight text-white">Antioch</p>
+      <p className="text-xs text-slate-500">{variant === 'admin' ? '관리자' : '회비 현황'}</p>
     </div>
   );
-};
+
+  return (
+    <>
+      {/* 데스크톱 */}
+      <aside className="sticky top-0 hidden h-screen w-56 shrink-0 flex-col bg-slate-900 md:flex">
+        <div className="px-6 py-7">{brand}</div>
+        <nav className="flex-1 space-y-0.5 px-3">{menu.map((item) => link(item))}</nav>
+        <div className="flex flex-col items-start gap-2 border-t border-slate-800 px-4 py-5 text-xs">
+          {footer}
+        </div>
+      </aside>
+
+      {/* 모바일 */}
+      <header className="sticky top-0 z-40 bg-slate-900 md:hidden">
+        <div className="flex items-center justify-between px-4 pt-3">
+          {brand}
+          <div className="flex gap-2 text-xs">{footer}</div>
+        </div>
+        <nav className="flex gap-1 overflow-x-auto px-3 py-2">{menu.map((item) => link(item, true))}</nav>
+      </header>
+    </>
+  );
+}
