@@ -20,7 +20,10 @@ export default function LoginPage() {
       body: JSON.stringify({ password }),
     });
     setPending(false);
-    if (!res.ok) return setError('비밀번호가 올바르지 않습니다.');
+    if (!res.ok) {
+      const data = await res.json().catch(() => null);
+      return setError(data?.error ?? '로그인에 실패했습니다.');
+    }
     router.replace('/admin');
     router.refresh();
   };

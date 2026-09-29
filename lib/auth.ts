@@ -5,7 +5,10 @@ export const SESSION_COOKIE = 'admin_session';
 export const SESSION_MAX_AGE = 60 * 60 * 12; // 12시간
 
 // 관리자 비밀번호는 .env.local 의 ADMIN_PASSWORD 로 설정합니다.
-const password = () => process.env.ADMIN_PASSWORD ?? '';
+// 배포 환경변수에 붙여넣다 섞인 앞뒤 공백은 무시
+const password = () => (process.env.ADMIN_PASSWORD ?? '').trim();
+
+export const isPasswordConfigured = () => password() !== '';
 
 function safeEqual(a: string, b: string) {
   const x = Buffer.from(a);
