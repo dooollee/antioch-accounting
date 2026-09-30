@@ -42,6 +42,24 @@ export interface Transaction {
 export const DUES_CATEGORY = '회비';
 export const carryoverKey = (year: number) => `carryover_${year}`;
 
+// 매달 반복되는 지출 목록 (settings 테이블에 JSON으로 저장). 각 달에서 버튼으로 내역에 추가
+export const FIXED_EXPENSES_KEY = 'fixed_expenses';
+export type FixedExpense = { category: string; description: string; amount: number };
+
+export function parseFixedExpenses(value: unknown): FixedExpense[] | null {
+  try {
+    const list = typeof value === 'string' ? JSON.parse(value) : value;
+    if (!Array.isArray(list)) return null;
+    const valid = list.every(
+      (f) => f && typeof f.category === 'string' && f.category.trim() && typeof f.description === 'string' &&
+        Number.isInteger(f.amount) && f.amount > 0
+    );
+    return valid ? list : null;
+  } catch {
+    return null;
+  }
+}
+
 export interface CategoryAmount {
   category: string;
   amount: number;
@@ -67,13 +85,17 @@ function sumByCategory(txs: Transaction[]): CategoryAmount[] {
 export function buildMonthlyReports(duesIncome: number[], txs: Transaction[], carryover: number): MonthReport[] {
   let opening = carryover;
   return FISCAL_MONTHS.map((_, i) => {
-    const items = txs.filter((t) => t.month_index === i);
-    const otherIncome = sumByCategory(items.filter((t) => t.type === 'income'));
+    const monthTxs = txs.filter((t) => t.month_index === i);
+    const otherIncome = sumByCategory(monthTxs.filter((t) => t.type === 'income'));
     const income = [
       ...(duesIncome[i] > 0 ? [{ category: DUES_CATEGORY, amount: duesIncome[i] }] : []),
       ...otherIncome,
     ];
-    const expense = sumByCategory(items.filter((t) => t.type === 'expense'));
+    const expense = sumByCategory(monthTxs.filter((t) => t.type === 'expense'));
+    // 상세 내역은 결산표와 같은 순서: 수입 → 지출, 그 안에서 항목 순서(금액 큰 순). 같은 항목 안은 입력 순서 유지
+    const order = [...otherIncome.map((c) => `income:${c.category}`), ...expense.map((c) => `expense:${c.category}`)];
+    const rank = (t: Transaction) => order.indexOf(`${t.type}:${t.category}`);
+    const items = monthTxs.sort((a, b) => rank(a) - rank(b));
     const incomeTotal = income.reduce((s, c) => s + c.amount, 0);
     const expenseTotal = expense.reduce((s, c) => s + c.amount, 0);
     const report = { opening, income, incomeTotal, expense, expenseTotal, closing: opening + incomeTotal - expenseTotal, items };

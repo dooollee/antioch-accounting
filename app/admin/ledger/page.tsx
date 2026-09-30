@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { AffiliationSelect, Header, Segmented } from '@/components/Header';
+import { AffiliationSelect, Header, SearchInput, Segmented } from '@/components/Header';
 import { memberApi, useMembers } from '@/lib/useMembers';
 import { DEPT_LABEL, FISCAL_MONTHS, Member, Scope, matchAffiliation } from '@/lib/utils/dataHelpers';
 
@@ -15,6 +15,7 @@ export default function Ledger() {
   const { members, setMembers, isLoading, error } = useMembers();
   const [scope, setScope] = useState<Scope>('total');
   const [affiliation, setAffiliation] = useState('');
+  const [query, setQuery] = useState('');
 
   // 납부 상태 저장 (화면 먼저 반영 후 DB 저장, 실패 시 되돌림)
   const savePayment = async (memberId: string, makeStatus: (prev: boolean[]) => boolean[]) => {
@@ -44,12 +45,16 @@ export default function Ledger() {
     savePayment(member.id, () => Array(FISCAL_MONTHS.length).fill(paid));
 
   const filtered = members.filter(
-    (m) => (scope === 'total' || m.dept === scope) && matchAffiliation(m, affiliation)
+    (m) =>
+      (scope === 'total' || m.dept === scope) &&
+      matchAffiliation(m, affiliation) &&
+      m.name.includes(query.trim())
   );
 
   return (
     <div className="space-y-6">
       <Header title="회계 장부" description="칸을 눌러 월별 납부 여부를 기록합니다. 1년치를 한 번에 낸 회원은 '일괄 납부'를 누르세요.">
+        <SearchInput placeholder="이름 검색" value={query} onChange={setQuery} className="sm:w-40" />
         <AffiliationSelect members={members} value={affiliation} onChange={setAffiliation} />
         <Segmented options={SCOPES} value={scope} onChange={setScope} />
       </Header>
@@ -118,7 +123,7 @@ export default function Ledger() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={14} className="p-16 text-center text-slate-500">해당 부서에 회원이 없습니다.</td>
+                    <td colSpan={14} className="p-16 text-center text-slate-500">조건에 맞는 회원이 없습니다.</td>
                   </tr>
                 )}
               </tbody>
