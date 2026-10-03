@@ -1,29 +1,25 @@
 'use client';
 
 import { useState } from 'react';
-import { Header, MonthSelect } from '@/components/Header';
+import { Header, MonthSelect, Segmented } from '@/components/Header';
 import { TrendChart } from '@/components/TrendChart';
 import {
   CONFIG,
   DEPT_LABEL,
   FISCAL_MONTHS,
   MonthlyStats,
+  SCOPE_OPTIONS,
   Scope,
   formatWon,
   getCurrentFiscalMonthIndex,
   paidRate,
 } from '@/lib/utils/dataHelpers';
 
-interface DashboardViewProps {
-  title: string;
-  scope: Scope;
-  months: MonthlyStats;
-}
-
 const shortWon = (n: number) => (n >= 10000 ? `${(n / 10000).toLocaleString('ko-KR')}만` : n.toLocaleString('ko-KR'));
 
-export function DashboardView({ title, scope, months }: DashboardViewProps) {
+export function DashboardView({ months }: { months: MonthlyStats }) {
   const [monthIndex, setMonthIndex] = useState(getCurrentFiscalMonthIndex);
+  const [scope, setScope] = useState<Scope>('total');
   const s = months[monthIndex][scope];
   const rate = paidRate(s);
   const cumulative = months.slice(0, monthIndex + 1).reduce((sum, m) => sum + m[scope].revenue, 0);
@@ -35,7 +31,8 @@ export function DashboardView({ title, scope, months }: DashboardViewProps) {
 
   return (
     <div className="space-y-6">
-      <Header title={title} description={`${CONFIG.year} 회계연도 · 월 회비 ${feeText}`}>
+      <Header title="대시보드" description={`${CONFIG.year} 회계연도 · 월 회비 ${feeText}`}>
+        <Segmented options={SCOPE_OPTIONS} value={scope} onChange={setScope} />
         <MonthSelect value={monthIndex} onChange={setMonthIndex} />
       </Header>
 

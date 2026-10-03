@@ -3,13 +3,7 @@
 import { useState } from 'react';
 import { AffiliationSelect, Header, SearchInput, Segmented } from '@/components/Header';
 import { memberApi, useMembers } from '@/lib/useMembers';
-import { DEPT_LABEL, FISCAL_MONTHS, Member, Scope, matchAffiliation } from '@/lib/utils/dataHelpers';
-
-const SCOPES: { value: Scope; label: string }[] = [
-  { value: 'total', label: '전체' },
-  { value: 'univ', label: '대학부' },
-  { value: 'youth', label: '청년부' },
-];
+import { DEPT_LABEL, FISCAL_MONTHS, Member, SCOPE_OPTIONS, Scope, matchAffiliation } from '@/lib/utils/dataHelpers';
 
 export default function Ledger() {
   const { members, setMembers, isLoading, error } = useMembers();
@@ -56,7 +50,7 @@ export default function Ledger() {
       <Header title="회계 장부" description="칸을 눌러 월별 납부 여부를 기록합니다. 1년치를 한 번에 낸 회원은 '일괄 납부'를 누르세요.">
         <SearchInput placeholder="이름 검색" value={query} onChange={setQuery} className="sm:w-40" />
         <AffiliationSelect members={members} value={affiliation} onChange={setAffiliation} />
-        <Segmented options={SCOPES} value={scope} onChange={setScope} />
+        <Segmented options={SCOPE_OPTIONS} value={scope} onChange={setScope} />
       </Header>
 
       {isLoading ? (

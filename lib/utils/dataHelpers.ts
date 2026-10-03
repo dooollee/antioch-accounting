@@ -137,6 +137,7 @@ export const CONFIG: Config = {
 
 export const DEPT_LABEL: Record<Dept, string> = { univ: '대학부', youth: '청년부' };
 export const SCOPE_LABEL: Record<Scope, string> = { total: '전체', ...DEPT_LABEL };
+export const SCOPE_OPTIONS = (['total', 'univ', 'youth'] as const).map((value) => ({ value, label: SCOPE_LABEL[value] }));
 export const STATUS_LABEL: Record<string, string> = {
   active: '활동',
   inactive: '장결',

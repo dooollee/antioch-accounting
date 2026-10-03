@@ -6,8 +6,6 @@ import { usePathname, useRouter } from 'next/navigation';
 const MENUS = {
   public: [
     { name: '대시보드', href: '/' },
-    { name: '대학부 현황', href: '/univ' },
-    { name: '청년부 현황', href: '/youth' },
     { name: '수입 · 지출', href: '/finance' },
   ],
   admin: [
