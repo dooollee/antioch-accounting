@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Header, MonthSelect, Segmented } from '@/components/Header';
 import { MonthReportCard } from '@/components/MonthReportCard';
 import { TypeBadge } from '@/components/FinanceView';
-import { useMembers } from '@/lib/useMembers';
+import { api, errorText, useMembers } from '@/lib/useMembers';
 import {
   CONFIG,
   DUES_CATEGORY,
@@ -38,20 +38,6 @@ const toDigits = (v: string, allowMinus = false) => {
   return digits ? `${minus ? '-' : ''}${Number(digits).toLocaleString('ko-KR')}` : minus ? '-' : '';
 };
 const parseAmount = (v: string) => Number(v.replace(/[^0-9-]/g, '')) || 0;
-
-async function api(url: string, method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE', body?: object) {
-  const res = await fetch(url, {
-    method,
-    headers: body ? { 'Content-Type': 'application/json' } : undefined,
-    body: body ? JSON.stringify(body) : undefined,
-  });
-  if (res.status === 401) window.location.assign('/login');
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error ?? '요청에 실패했습니다.');
-  return data;
-}
-
-const errorText = (e: unknown) => (e instanceof Error ? e.message : '');
 
 export default function FinanceAdminPage() {
   const { members, isLoading: membersLoading } = useMembers();

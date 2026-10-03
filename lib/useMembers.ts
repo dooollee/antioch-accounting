@@ -37,6 +37,21 @@ export async function memberApi(method: 'POST' | 'PATCH' | 'DELETE', body: objec
   return res.json();
 }
 
+// 관리자 API 공용 호출. 실패하면 서버가 준 메시지로 throw
+export async function api(url: string, method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE', body?: object) {
+  const res = await fetch(url, {
+    method,
+    headers: body ? { 'Content-Type': 'application/json' } : undefined,
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  if (res.status === 401) toLogin();
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error ?? '요청에 실패했습니다.');
+  return data;
+}
+
+export const errorText = (e: unknown) => (e instanceof Error ? e.message : '');
+
 export async function copyText(text: string) {
   try {
     await navigator.clipboard.writeText(text);

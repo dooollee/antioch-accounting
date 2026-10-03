@@ -14,6 +14,7 @@ const MENUS = {
     { name: '미납 현황', href: '/admin' },
     { name: '회계 장부', href: '/admin/ledger' },
     { name: '수입 · 지출 입력', href: '/admin/finance' },
+    { name: '통장 내역 가져오기', href: '/admin/import' },
     { name: '회원 관리', href: '/admin/members' },
   ],
 };

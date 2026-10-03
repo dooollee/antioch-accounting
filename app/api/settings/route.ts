@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { isAdmin } from '@/lib/auth';
+import { BANK_IMPORT_KEY, parseBankImport } from '@/lib/bankImport';
 import { CONFIG, FIXED_EXPENSES_KEY, carryoverKey, parseFixedExpenses } from '@/lib/utils/dataHelpers';
 
-// 관리자 설정값 (key-value): 미납 안내 문구, 전년도 이월금, 고정지출 목록
+// 관리자 설정값 (key-value): 미납 안내 문구, 전년도 이월금, 고정지출 목록, 통장 내역 반영 기록
 const CARRYOVER_KEY = carryoverKey(CONFIG.year);
-const ALLOWED_KEYS = ['message_template', CARRYOVER_KEY, FIXED_EXPENSES_KEY];
+const ALLOWED_KEYS = ['message_template', CARRYOVER_KEY, FIXED_EXPENSES_KEY, BANK_IMPORT_KEY];
 
 const unauthorized = () => NextResponse.json({ error: '관리자 로그인이 필요합니다.' }, { status: 401 });
 
@@ -30,6 +31,9 @@ export async function PUT(request: Request) {
   }
   if (key === FIXED_EXPENSES_KEY && !parseFixedExpenses(value)) {
     return NextResponse.json({ error: '고정지출 형식이 올바르지 않습니다.' }, { status: 400 });
+  }
+  if (key === BANK_IMPORT_KEY && !parseBankImport(value)) {
+    return NextResponse.json({ error: '통장 내역 반영 기록 형식이 올바르지 않습니다.' }, { status: 400 });
   }
   const { error } = await supabase.from('settings').upsert({ key, value });
   if (error) {
